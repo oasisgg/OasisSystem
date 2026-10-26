@@ -3,6 +3,9 @@ package com.yourname.system;
 import com.yourname.system.friend.FriendCommand;
 import com.yourname.system.friend.FriendGUI;
 import com.yourname.system.friend.FriendManager;
+import com.yourname.system.party.PartyCommand;
+import com.yourname.system.party.PartyGUI;
+import com.yourname.system.party.PartyManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Sound;
@@ -24,7 +27,7 @@ public class SystemMain extends JavaPlugin implements CommandExecutor, Listener 
         instance = this;
         saveDefaultConfig();
 
-        // 1. フレンド機能のマネージャーとコマンド・GUIの登録
+        // 1. フレンド機能の登録
         FriendManager friendManager = new FriendManager(this);
         FriendCommand friendCmd = new FriendCommand(friendManager);
         if (getCommand("f") != null) {
@@ -32,12 +35,20 @@ public class SystemMain extends JavaPlugin implements CommandExecutor, Listener 
         }
         Bukkit.getPluginManager().registerEvents(new FriendGUI(friendManager), this);
 
-        // 2. システムコマンドの登録
+        // 2. パーティー機能の登録
+        PartyManager partyManager = new PartyManager();
+        PartyCommand partyCmd = new PartyCommand(partyManager);
+        if (getCommand("p") != null) {
+            getCommand("p").setExecutor(partyCmd);
+        }
+        Bukkit.getPluginManager().registerEvents(new PartyGUI(partyManager), this);
+
+        // 3. システムコマンドの登録
         if (getCommand("hub") != null) getCommand("hub").setExecutor(this);
         if (getCommand("leave") != null) getCommand("leave").setExecutor(this);
         if (getCommand("sethub") != null) getCommand("sethub").setExecutor(this);
 
-        // 3. イベント（VoidSpawn用など）の登録
+        // 4. イベントの登録
         Bukkit.getPluginManager().registerEvents(this, this);
 
         getLogger().info("SystemPlugin が正常に有効化されました！");
