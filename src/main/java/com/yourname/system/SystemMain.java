@@ -1,5 +1,8 @@
 package com.yourname.system;
 
+import com.yourname.system.friend.FriendCommand;
+import com.yourname.system.friend.FriendGUI;
+import com.yourname.system.friend.FriendManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Sound;
@@ -21,10 +24,20 @@ public class SystemMain extends JavaPlugin implements CommandExecutor, Listener 
         instance = this;
         saveDefaultConfig();
 
+        // 1. フレンド機能のマネージャーとコマンド・GUIの登録
+        FriendManager friendManager = new FriendManager(this);
+        FriendCommand friendCmd = new FriendCommand(friendManager);
+        if (getCommand("f") != null) {
+            getCommand("f").setExecutor(friendCmd);
+        }
+        Bukkit.getPluginManager().registerEvents(new FriendGUI(friendManager), this);
+
+        // 2. システムコマンドの登録
         if (getCommand("hub") != null) getCommand("hub").setExecutor(this);
         if (getCommand("leave") != null) getCommand("leave").setExecutor(this);
         if (getCommand("sethub") != null) getCommand("sethub").setExecutor(this);
 
+        // 3. イベント（VoidSpawn用など）の登録
         Bukkit.getPluginManager().registerEvents(this, this);
 
         getLogger().info("SystemPlugin が正常に有効化されました！");
