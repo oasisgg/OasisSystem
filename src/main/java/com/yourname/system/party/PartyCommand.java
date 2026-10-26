@@ -45,13 +45,8 @@ public class PartyCommand implements CommandExecutor {
                 return true;
             }
 
+            // 自分がパーティーに入っている場合はそのリーダーを取得、入っていなければ自分自身をリーダー（新規パーティー）とする
             UUID leader = partyManager.isInParty(player.getUniqueId()) ? partyManager.getPartyLeader(player.getUniqueId()) : player.getUniqueId();
-            
-            // 既にパーティーに入っているメンバーがリーダー以外なら招待不可
-            if (partyManager.isInParty(player.getUniqueId()) && !partyManager.isLeader(player.getUniqueId())) {
-                player.sendMessage("§cパーティーのリーダーのみがプレイヤーを招待できます。");
-                return true;
-            }
 
             partyManager.sendInvite(leader, target.getUniqueId());
             player.sendMessage("§a§l[Party] §a" + target.getName() + " にパーティー招待を送りました！");
