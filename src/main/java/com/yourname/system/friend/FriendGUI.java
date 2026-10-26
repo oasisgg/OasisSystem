@@ -1,8 +1,8 @@
 package com.yourname.system.friend;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -32,7 +32,7 @@ public class FriendGUI implements Listener {
         ItemMeta fMeta = friendHead.getItemMeta();
         fMeta.setDisplayName("§a§lフレンド一覧");
         List<String> fLore = new ArrayList<>();
-        fLore.append("§7クリックしてフレンドを確認・管理します。");
+        fLore.add("§7クリックしてフレンドを確認・管理します。");
         fMeta.setLore(fLore);
         friendHead.setItemMeta(fMeta);
         inv.setItem(11, friendHead);
@@ -42,7 +42,7 @@ public class FriendGUI implements Listener {
         ItemMeta rMeta = requestHead.getItemMeta();
         rMeta.setDisplayName("§e§l届いているフレンド申請");
         List<String> rLore = new ArrayList<>();
-        rLore.append("§7クリックして申請を承認・拒否します。");
+        rLore.add("§7クリックして申請を承認・拒否します。");
         rMeta.setLore(rLore);
         requestHead.setItemMeta(rMeta);
         inv.setItem(15, requestHead);
@@ -51,7 +51,7 @@ public class FriendGUI implements Listener {
     }
 
     public static void openFriendListGUI(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 54, "§8フレンド一覧");
+        Inventory inv = Bukkit.createInventory(null, 54, "§8フレンド一覧 (オンライン: §a緑§8 / オフライン: §c赤§8)");
         List<UUID> friends = friendManager.getFriends(player.getUniqueId());
 
         for (UUID uuid : friends) {
@@ -68,7 +68,7 @@ public class FriendGUI implements Listener {
 
             List<String> lore = new ArrayList<>();
             lore.add(isOnline ? "§a● オンライン" : "§c● オフライン");
-            lore.add("§7クリックしてフレンド削除");
+            lore.add("§7クリックしてフレンド解除");
             meta.setLore(lore);
 
             head.setItemMeta(meta);
@@ -89,11 +89,10 @@ public class FriendGUI implements Listener {
             if (event.getRawSlot() == 11) {
                 openFriendListGUI(player);
             } else if (event.getRawSlot() == 15) {
-                player.sendMessage("§e[Friend] 申請一覧機能は現在準備中です。");
+                player.sendMessage("§e[Friend] 申請一覧機能は現在準備中やで！");
             }
         } else if (title.startsWith("§8フレンド一覧")) {
             event.setCancelled(true);
-            // フレンド解除の処理などをここに追加できます
         }
     }
 }
