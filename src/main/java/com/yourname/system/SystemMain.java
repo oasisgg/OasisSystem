@@ -110,7 +110,6 @@ public class SystemMain extends JavaPlugin implements CommandExecutor, Listener 
 
         player.teleport(hubLoc);
         player.setFallDistance(0);
-        player.sendMessage("§a§l[System] §aロビーへ移動しました！");
         player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
     }
 
