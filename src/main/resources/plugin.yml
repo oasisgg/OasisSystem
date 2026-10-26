@@ -12,3 +12,6 @@ commands:
   sethub:
     description: ロビーのスポーン位置を設定します。
     permission: system.admin
+  f:
+    description: フレンドメニューを開きます。
+    aliases: [friend]
