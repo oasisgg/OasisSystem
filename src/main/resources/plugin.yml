@@ -1,0 +1,14 @@
+name: SystemPlugin
+version: 1.0.0
+main: com.yourname.system.SystemMain
+api-version: '26.3'
+author: Lume6JP
+commands:
+  hub:
+    description: ロビーへ移動します。
+    aliases: [spawn]
+  leave:
+    description: ロビーへ戻ります。
+  sethub:
+    description: ロビーのスポーン位置を設定します。
+    permission: system.admin
