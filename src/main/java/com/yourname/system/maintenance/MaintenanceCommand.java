@@ -18,8 +18,9 @@ public class MaintenanceCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        // --- 1. 権限チェック (管理者以外は絶対に実行させない) ---
-        if (!sender.hasPermission("duel.admin")) {
+        // --- 1. 権限チェック ---
+        // プレイヤーの場合は "duel.admin" 権限をチェック。コンソール（ConsoleCommandSender）の場合は無条件で許可する！
+        if (sender instanceof Player && !sender.hasPermission("duel.admin")) {
             sender.sendMessage("§cコマンドを実行する権限がありません。");
             return true;
         }
@@ -45,13 +46,15 @@ public class MaintenanceCommand implements CommandExecutor {
             }
 
             Bukkit.broadcastMessage("§c《メンテナンス》| サーバーがメンテナンスモードになりました。§7メンバーはkickされます。");
+            sender.sendMessage("§aメンテナンスモードを有効にしました。");
             return true;
 
         } else if (subCommand.equals("off")) {
             plugin.getConfig().set("maintenance.enabled", false);
             plugin.saveConfig();
 
-            Bukkit.broadcastMessage("§a《メンテナンス》| メンテナンスが終了しました。§7通常通り参加できます,");
+            Bukkit.broadcastMessage("§a《メンテナンス》| メンテナンスが終了しました。§7通常通り参加できます。");
+            sender.sendMessage("§aメンテナンスモードを解除しました。");
             return true;
         } else {
             sender.sendMessage("§c使用方法: /maintenance <on|off>");
