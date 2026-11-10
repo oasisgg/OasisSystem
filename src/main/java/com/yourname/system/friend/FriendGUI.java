@@ -42,7 +42,7 @@ public class FriendGUI implements Listener {
         ItemMeta rMeta = requestHead.getItemMeta();
         rMeta.setDisplayName("§e§l届いているフレンド申請");
         List<String> rLore = new ArrayList<>();
-        rLore.add("§7クリックして申請を承認・拒否します。");
+        rLore.add("§7クリックして申請を確認します。");
         rMeta.setLore(rLore);
         requestHead.setItemMeta(rMeta);
         inv.setItem(15, requestHead);
@@ -93,13 +93,42 @@ public class FriendGUI implements Listener {
             meta.setDisplayName("§e" + (target.getName() != null ? target.getName() : "Unknown"));
 
             List<String> lore = new ArrayList<>();
-            lore.add("§a左クリック: §2申請を承認する");
-            lore.add("§c右クリック: §4申請を拒否する");
+            lore.add("§7クリックして承認・拒否を選ぶ");
             meta.setLore(lore);
 
             head.setItemMeta(meta);
             inv.addItem(head);
         }
+
+        player.openInventory(inv);
+    }
+
+    // 個別の申請管理GUIを開く（統合版対応：ボタン式）
+    public static void openRequestActionGUI(Player player, OfflinePlayer target) {
+        // インベントリのタイトルに相手の名前やUUIDを目印として持たせるか、あるいはシンプルに固定タイトルにする
+        Inventory inv = Bukkit.createInventory(null, 27, "§8申請管理: " + target.getName());
+
+        // 相手の頭 (スロット4)
+        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+        SkullMeta meta = (SkullMeta) head.getItemMeta();
+        meta.setOwningPlayer(target);
+        meta.setDisplayName("§e" + target.getName());
+        head.setItemMeta(meta);
+        inv.setItem(4, head);
+
+        // 承認ボタン (スロット11: エメラルドブロック)
+        ItemStack acceptBtn = new ItemStack(Material.EMERALD_BLOCK);
+        ItemMeta aMeta = acceptBtn.getItemMeta();
+        aMeta.setDisplayName("§a§l申請を承認する");
+        acceptBtn.setItemMeta(aMeta);
+        inv.setItem(11, acceptBtn);
+
+        // 拒否ボタン (スロット15: レッドストーンブロック)
+        ItemStack denyBtn = new ItemStack(Material.REDSTONE_BLOCK);
+        ItemMeta dMeta = denyBtn.getItemMeta();
+        dMeta.setDisplayName("§c§l申請を拒否する");
+        denyBtn.setItemMeta(dMeta);
+        inv.setItem(15, denyBtn);
 
         player.openInventory(inv);
     }
@@ -145,7 +174,19 @@ public class FriendGUI implements Listener {
             OfflinePlayer target = meta.getOwningPlayer();
             if (target.getUniqueId() == null) return;
 
-            if (event.isLeftClick()) {
+            // 統合版でも安全に操作できる個別の承認・拒否メニューを開く
+            openRequestActionGUI(player, target);
+        }
+        else if (title.startsWith("§8申請管理: ")) {
+            event.setCancelled(true);
+            ItemStack clickedItem = event.getCurrentItem();
+            if (clickedItem == null) return;
+
+            // タイトルからターゲットの名前を抽出する
+            String targetName = title.replace("§8申請管理: ", "");
+            OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
+
+            if (event.getRawSlot() == 11) {
                 // 承認
                 friendManager.acceptRequest(player.getUniqueId(), target.getUniqueId());
                 player.sendMessage("§a[Friend] " + target.getName() + " からのフレンド申請を承認しました！");
@@ -153,12 +194,5 @@ public class FriendGUI implements Listener {
                     target.getPlayer().sendMessage("§a[Friend] " + player.getName() + " がフレンド申請を承認しました！");
                 }
                 player.closeInventory();
-            } else if (event.isRightClick()) {
+            } else if (event.getRawSlot() == 15) {
                 // 拒否
-                friendManager.removeRequest(player.getUniqueId(), target.getUniqueId());
-                player.sendMessage("§c[Friend] " + target.getName() + " からのフレンド申請を拒否しました。");
-                player.closeInventory();
-            }
-        }
-    }
-}
