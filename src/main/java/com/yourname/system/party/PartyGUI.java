@@ -42,7 +42,7 @@ public class PartyGUI implements Listener {
         ItemMeta iMeta = inviteItem.getItemMeta();
         iMeta.setDisplayName("§e§l届いているパーティー招待");
         List<String> iLore = new ArrayList<>();
-        iLore.add("§7クリックして届いた招待を承認・拒否します。");
+        iLore.add("§7クリックして届いた招待を確認します。");
         iMeta.setLore(iLore);
         inviteItem.setItemMeta(iMeta);
         inv.setItem(15, inviteItem);
@@ -68,7 +68,7 @@ public class PartyGUI implements Listener {
             meta.setOwningPlayer(target);
 
             boolean isLeader = uuid.equals(leader);
-            meta.setDisplayName((isLeader ? "§e[Leader] " : "§a[Member] ") + target.getName());
+            meta.setDisplayName((isLeader ? "§e[Leader] " : "§a[Member] ") + (target.getName() != null ? target.getName() : "Unknown"));
 
             List<String> lore = new ArrayList<>();
             lore.add(target.isOnline() ? "§a● オンライン" : "§c● オフライン");
@@ -95,16 +95,43 @@ public class PartyGUI implements Listener {
             ItemStack head = new ItemStack(Material.PLAYER_HEAD);
             SkullMeta meta = (SkullMeta) head.getItemMeta();
             meta.setOwningPlayer(leader);
-            meta.setDisplayName("§a" + leader.getName() + " のパーティー");
+            meta.setDisplayName("§a" + (leader.getName() != null ? leader.getName() : "Unknown") + " のパーティー");
 
             List<String> lore = new ArrayList<>();
-            lore.add("§a[左クリック] 承認する");
-            lore.add("§c[右クリック] 拒否する");
+            lore.add("§7クリックして承認・拒否を選ぶ");
             meta.setLore(lore);
 
             head.setItemMeta(meta);
             inv.addItem(head);
         }
+
+        player.openInventory(inv);
+    }
+
+    // 統合版対応：個別のパーティー招待管理GUI
+    public static void openPartyRequestActionGUI(Player player, OfflinePlayer leader) {
+        Inventory inv = Bukkit.createInventory(null, 27, "§8パーティ招待管理: " + leader.getName());
+
+        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+        SkullMeta meta = (SkullMeta) head.getItemMeta();
+        meta.setOwningPlayer(leader);
+        meta.setDisplayName("§e" + leader.getName() + " のパーティー");
+        head.setItemMeta(meta);
+        inv.setItem(4, head);
+
+        // 承認ボタン (スロット11: エメラルドブロック)
+        ItemStack acceptBtn = new ItemStack(Material.EMERALD_BLOCK);
+        ItemMeta aMeta = acceptBtn.getItemMeta();
+        aMeta.setDisplayName("§a§l招待を承認する");
+        acceptBtn.setItemMeta(aMeta);
+        inv.setItem(11, acceptBtn);
+
+        // 拒否ボタン (スロット15: レッドストーンブロック)
+        ItemStack denyBtn = new ItemStack(Material.REDSTONE_BLOCK);
+        ItemMeta dMeta = denyBtn.getItemMeta();
+        dMeta.setDisplayName("§c§l招待を拒否する");
+        denyBtn.setItemMeta(dMeta);
+        inv.setItem(15, denyBtn);
 
         player.openInventory(inv);
     }
@@ -122,24 +149,33 @@ public class PartyGUI implements Listener {
             } else if (event.getRawSlot() == 15) {
                 openRequestsGUI(player);
             }
-        } else if (title.equals("§8パーティーメンバー一覧")) {
+        } 
+        else if (title.equals("§8パーティーメンバー一覧")) {
             event.setCancelled(true);
-        } else if (title.equals("§8パーティー招待一覧")) {
+        } 
+        else if (title.equals("§8パーティー招待一覧")) {
             event.setCancelled(true);
             ItemStack clicked = event.getCurrentItem();
-            if (clicked == null || !clicked.hasItemMeta()) return;
+            if (clicked == null || clicked.getType() != Material.PLAYER_HEAD) return;
 
             SkullMeta meta = (SkullMeta) clicked.getItemMeta();
-            if (meta.getOwningPlayer() == null) return;
+            if (meta == null || meta.getOwningPlayer() == null) return;
 
             OfflinePlayer leader = meta.getOwningPlayer();
+            // 個別の管理画面を開く
+            openPartyRequestActionGUI(player, leader);
+        }
+        else if (title.startsWith("§8パーティ招待管理: ")) {
+            event.setCancelled(true);
+            String leaderName = title.replace("§8パーティ招待管理: ", "");
+            OfflinePlayer leader = Bukkit.getOfflinePlayer(leaderName);
 
-            if (event.isLeftClick()) {
-                // 左クリックで承認
+            if (event.getRawSlot() == 11) {
+                // 承認
                 player.performCommand("p accept " + leader.getName());
                 player.closeInventory();
-            } else if (event.isRightClick()) {
-                // 右クリックで拒否
+            } else if (event.getRawSlot() == 15) {
+                // 拒否
                 player.performCommand("p deny " + leader.getName());
                 player.closeInventory();
             }
