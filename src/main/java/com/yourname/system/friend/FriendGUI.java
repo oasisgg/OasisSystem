@@ -50,8 +50,9 @@ public class FriendGUI implements Listener {
         player.openInventory(inv);
     }
 
+    // フレンド一覧GUIを開く
     public static void openFriendListGUI(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 54, "§8フレンド一覧 (オンライン: §a緑§8 / オフライン: §c赤§8)");
+        Inventory inv = Bukkit.createInventory(null, 54, "§8フレンド一覧");
         List<UUID> friends = friendManager.getFriends(player.getUniqueId());
 
         for (UUID uuid : friends) {
@@ -62,13 +63,38 @@ public class FriendGUI implements Listener {
             SkullMeta meta = (SkullMeta) head.getItemMeta();
             meta.setOwningPlayer(target);
 
-            // オンラインなら§a、オフラインなら§cで名前をつける
             String statusColor = isOnline ? "§a" : "§c";
-            meta.setDisplayName(statusColor + target.getName());
+            meta.setDisplayName(statusColor + (target.getName() != null ? target.getName() : "Unknown"));
 
             List<String> lore = new ArrayList<>();
             lore.add(isOnline ? "§a● オンライン" : "§c● オフライン");
-            lore.add("§7クリックしてフレンド解除");
+            lore.add("§c§l[!] クリックしてフレンド解除");
+            meta.setLore(lore);
+
+            head.setItemMeta(meta);
+            inv.addItem(head);
+        }
+
+        player.openInventory(inv);
+    }
+
+    // 届いている申請一覧GUIを開く
+    public static void openRequestsGUI(Player player) {
+        Inventory inv = Bukkit.createInventory(null, 54, "§8フレンド申請一覧");
+        List<UUID> requests = friendManager.getRequests(player.getUniqueId());
+
+        for (UUID uuid : requests) {
+            OfflinePlayer target = Bukkit.getOfflinePlayer(uuid);
+
+            ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+            SkullMeta meta = (SkullMeta) head.getItemMeta();
+            meta.setOwningPlayer(target);
+
+            meta.setDisplayName("§e" + (target.getName() != null ? target.getName() : "Unknown"));
+
+            List<String> lore = new ArrayList<>();
+            lore.add("§a左クリック: §2申請を承認する");
+            lore.add("§c右クリック: §4申請を拒否する");
             meta.setLore(lore);
 
             head.setItemMeta(meta);
@@ -89,10 +115,50 @@ public class FriendGUI implements Listener {
             if (event.getRawSlot() == 11) {
                 openFriendListGUI(player);
             } else if (event.getRawSlot() == 15) {
-                player.sendMessage("§e[Friend] 申請一覧機能は現在準備中やで！");
+                openRequestsGUI(player);
             }
-        } else if (title.startsWith("§8フレンド一覧")) {
+        } 
+        else if (title.equals("§8フレンド一覧")) {
             event.setCancelled(true);
+            ItemStack clickedItem = event.getCurrentItem();
+            if (clickedItem == null || clickedItem.getType() != Material.PLAYER_HEAD) return;
+
+            SkullMeta meta = (SkullMeta) clickedItem.getItemMeta();
+            if (meta == null || meta.getOwningPlayer() == null) return;
+
+            OfflinePlayer target = meta.getOwningPlayer();
+            if (target.getUniqueId() == null) return;
+
+            // フレンド解除の実行
+            friendManager.removeFriend(player.getUniqueId(), target.getUniqueId());
+            player.sendMessage("§c[Friend] " + target.getName() + " とのフレンドを解除しました。");
+            player.closeInventory();
+        } 
+        else if (title.equals("§8フレンド申請一覧")) {
+            event.setCancelled(true);
+            ItemStack clickedItem = event.getCurrentItem();
+            if (clickedItem == null || clickedItem.getType() != Material.PLAYER_HEAD) return;
+
+            SkullMeta meta = (SkullMeta) clickedItem.getItemMeta();
+            if (meta == null || meta.getOwningPlayer() == null) return;
+
+            OfflinePlayer target = meta.getOwningPlayer();
+            if (target.getUniqueId() == null) return;
+
+            if (event.isLeftClick()) {
+                // 承認
+                friendManager.acceptRequest(player.getUniqueId(), target.getUniqueId());
+                player.sendMessage("§a[Friend] " + target.getName() + " からのフレンド申請を承認しました！");
+                if (target.isOnline() && target.getPlayer() != null) {
+                    target.getPlayer().sendMessage("§a[Friend] " + player.getName() + " がフレンド申請を承認しました！");
+                }
+                player.closeInventory();
+            } else if (event.isRightClick()) {
+                // 拒否
+                friendManager.removeRequest(player.getUniqueId(), target.getUniqueId());
+                player.sendMessage("§c[Friend] " + target.getName() + " からのフレンド申請を拒否しました。");
+                player.closeInventory();
+            }
         }
     }
 }
