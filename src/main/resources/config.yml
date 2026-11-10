@@ -3,3 +3,8 @@ void-y: 0
 
 # ロビーの位置情報（/sethub で自動更新されます）
 hub: {}
+
+# メンテナンスkickメッセージ
+maintenance:
+  enabled: false
+  message: "§cこのサーバーはメンテナンス中です。\n§eお問い合わせはこちら: https://example.com"
