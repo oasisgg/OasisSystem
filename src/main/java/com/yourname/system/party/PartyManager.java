@@ -10,7 +10,6 @@ public class PartyManager {
     // 招待される人UUID -> 招待を送ったリーダーUUIDのリスト
     private final Map<UUID, List<UUID>> partyInvitesMap = new HashMap<>();
 
-    // パーティー作成または取得
     public UUID getPartyLeader(UUID player) {
         return playerPartyMap.get(player);
     }
@@ -36,7 +35,6 @@ public class PartyManager {
         }
     }
 
-    // 届いている招待一覧を取得
     public List<UUID> getInvites(UUID target) {
         return partyInvitesMap.getOrDefault(target, new ArrayList<>());
     }
@@ -48,7 +46,6 @@ public class PartyManager {
             return false;
         }
 
-        // パーティーを未作成ならリーダー自身を追加して作成
         if (!partyMembersMap.containsKey(leader)) {
             List<UUID> members = new ArrayList<>();
             members.add(leader);
@@ -56,19 +53,16 @@ public class PartyManager {
             playerPartyMap.put(leader, leader);
         }
 
-        // メンバー追加
         List<UUID> members = partyMembersMap.get(leader);
         if (!members.contains(player)) {
             members.add(player);
         }
         playerPartyMap.put(player, leader);
 
-        // 招待を削除
         invites.remove(leader);
         return true;
     }
 
-    // 招待を拒否
     public boolean denyInvite(UUID player, UUID leader) {
         List<UUID> invites = partyInvitesMap.get(player);
         if (invites != null && invites.contains(leader)) {
@@ -78,20 +72,48 @@ public class PartyManager {
         return false;
     }
 
-    // パーティーを脱退
+    // パーティーを脱退 (メンバー用)
     public void leaveParty(UUID player) {
         UUID leader = playerPartyMap.remove(player);
         if (leader != null) {
             List<UUID> members = partyMembersMap.get(leader);
             if (members != null) {
                 members.remove(player);
-                if (members.size() <= 1) {
-                    // 1人以下になったらパーティー解散
-                    for (UUID m : members) {
-                        playerPartyMap.remove(m);
-                    }
+                // もしメンバーが0人になったらマップから消去
+                if (members.isEmpty()) {
                     partyMembersMap.remove(leader);
                 }
+            }
+        }
+    }
+
+    // パーティー解散 (リーダー用)
+    public void dissolveParty(UUID leader) {
+        List<UUID> members = partyMembersMap.remove(leader);
+        if (members != null) {
+            for (UUID m : members) {
+                playerPartyMap.remove(m);
+            }
+        }
+    }
+
+    // メンバーをキック
+    public void kickMember(UUID leader, UUID target) {
+        List<UUID> members = partyMembersMap.get(leader);
+        if (members != null) {
+            members.remove(target);
+            playerPartyMap.remove(target);
+        }
+    }
+
+    // オーナー（リーダー）を譲渡
+    public void transferOwnership(UUID oldLeader, UUID newLeader) {
+        List<UUID> members = partyMembersMap.remove(oldLeader);
+        if (members != null) {
+            // リストの先頭を新しいリーダーに
+            partyMembersMap.put(newLeader, members);
+            for (UUID m : members) {
+                playerPartyMap.put(m, newLeader);
             }
         }
     }
