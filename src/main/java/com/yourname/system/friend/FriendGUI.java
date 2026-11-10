@@ -68,7 +68,7 @@ public class FriendGUI implements Listener {
 
             List<String> lore = new ArrayList<>();
             lore.add(isOnline ? "§a● オンライン" : "§c● オフライン");
-            lore.add("§c§l[!] クリックしてフレンド解除");
+            lore.add("§7クリックしてフレンドを管理");
             meta.setLore(lore);
 
             head.setItemMeta(meta);
@@ -93,7 +93,7 @@ public class FriendGUI implements Listener {
             meta.setDisplayName("§e" + (target.getName() != null ? target.getName() : "Unknown"));
 
             List<String> lore = new ArrayList<>();
-            lore.add("§7クリックして承認・拒否を選ぶ");
+            lore.add("§7クリックして管理");
             meta.setLore(lore);
 
             head.setItemMeta(meta);
@@ -103,12 +103,10 @@ public class FriendGUI implements Listener {
         player.openInventory(inv);
     }
 
-    // 個別の申請管理GUIを開く（統合版対応：ボタン式）
+    // 個別の申請管理GUI（承認・拒否）
     public static void openRequestActionGUI(Player player, OfflinePlayer target) {
-        // インベントリのタイトルに相手の名前やUUIDを目印として持たせるか、あるいはシンプルに固定タイトルにする
         Inventory inv = Bukkit.createInventory(null, 27, "§8申請管理: " + target.getName());
 
-        // 相手の頭 (スロット4)
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta meta = (SkullMeta) head.getItemMeta();
         meta.setOwningPlayer(target);
@@ -116,19 +114,76 @@ public class FriendGUI implements Listener {
         head.setItemMeta(meta);
         inv.setItem(4, head);
 
-        // 承認ボタン (スロット11: エメラルドブロック)
         ItemStack acceptBtn = new ItemStack(Material.EMERALD_BLOCK);
         ItemMeta aMeta = acceptBtn.getItemMeta();
         aMeta.setDisplayName("§a§l申請を承認する");
         acceptBtn.setItemMeta(aMeta);
         inv.setItem(11, acceptBtn);
 
-        // 拒否ボタン (スロット15: レッドストーンブロック)
         ItemStack denyBtn = new ItemStack(Material.REDSTONE_BLOCK);
         ItemMeta dMeta = denyBtn.getItemMeta();
         dMeta.setDisplayName("§c§l申請を拒否する");
         denyBtn.setItemMeta(dMeta);
         inv.setItem(15, denyBtn);
+
+        player.openInventory(inv);
+    }
+
+    // ① フレンド個別管理GUI（削除・戻る）
+    public static void openFriendActionGUI(Player player, OfflinePlayer target) {
+        Inventory inv = Bukkit.createInventory(null, 27, "§8フレンド管理: " + target.getName());
+
+        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+        SkullMeta meta = (SkullMeta) head.getItemMeta();
+        meta.setOwningPlayer(target);
+        meta.setDisplayName("§e" + target.getName());
+        head.setItemMeta(meta);
+        inv.setItem(4, head);
+
+        // 削除ボタン (スロット11)
+        ItemStack removeBtn = new ItemStack(Material.BARRIER);
+        ItemMeta rMeta = removeBtn.getItemMeta();
+        rMeta.setDisplayName("§c§lフレンドを削除する");
+        List<String> rLore = new ArrayList<>();
+        rLore.add("§7フレンド削除できます。");
+        rMeta.setLore(rLore);
+        removeBtn.setItemMeta(rMeta);
+        inv.setItem(11, removeBtn);
+
+        // 戻るボタン (スロット15)
+        ItemStack backBtn = new ItemStack(Material.ARROW);
+        ItemMeta bMeta = backBtn.getItemMeta();
+        bMeta.setDisplayName("§e§l戻る");
+        backBtn.setItemMeta(bMeta);
+        inv.setItem(15, backBtn);
+
+        player.openInventory(inv);
+    }
+
+    // ② 本当に削除するか確認するGUI
+    public static void openConfirmDeleteGUI(Player player, OfflinePlayer target) {
+        Inventory inv = Bukkit.createInventory(null, 27, "§4本当に削除しますか?: " + target.getName());
+
+        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+        SkullMeta meta = (SkullMeta) head.getItemMeta();
+        meta.setOwningPlayer(target);
+        meta.setDisplayName("§c" + target.getName());
+        head.setItemMeta(meta);
+        inv.setItem(4, head);
+
+        // はい（削除する） (スロット11)
+        ItemStack yesBtn = new ItemStack(Material.RED_WOOL);
+        ItemMeta yMeta = yesBtn.getItemMeta();
+        yMeta.setDisplayName("§c§l削除");
+        yesBtn.setItemMeta(yMeta);
+        inv.setItem(11, yesBtn);
+
+        // いいえ（戻る） (スロット15)
+        ItemStack noBtn = new ItemStack(Material.LIME_WOOL);
+        ItemMeta nMeta = noBtn.getItemMeta();
+        nMeta.setDisplayName("§a§l戻る");
+        noBtn.setItemMeta(nMeta);
+        inv.setItem(15, noBtn);
 
         player.openInventory(inv);
     }
@@ -158,11 +213,37 @@ public class FriendGUI implements Listener {
             OfflinePlayer target = meta.getOwningPlayer();
             if (target.getUniqueId() == null) return;
 
-            // フレンド解除の実行
-            friendManager.removeFriend(player.getUniqueId(), target.getUniqueId());
-            player.sendMessage("§c[Friend] " + target.getName() + " とのフレンドを解除しました。");
-            player.closeInventory();
+            // 即座に削除せず、フレンド個別管理GUIを開く
+            openFriendActionGUI(player, target);
         } 
+        else if (title.startsWith("§8フレンド管理: ")) {
+            event.setCancelled(true);
+            String targetName = title.replace("§8フレンド管理: ", "");
+            OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
+
+            if (event.getRawSlot() == 11) {
+                // 削除確認画面へ進む
+                openConfirmDeleteGUI(player, target);
+            } else if (event.getRawSlot() == 15) {
+                // フレンド一覧に戻る
+                openFriendListGUI(player);
+            }
+        }
+        else if (title.startsWith("§4本当に削除しますか?: ")) {
+            event.setCancelled(true);
+            String targetName = title.replace("§4本当に削除しますか?: ", "");
+            OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
+
+            if (event.getRawSlot() == 11) {
+                // 「はい」：本当に削除を実行
+                friendManager.removeFriend(player.getUniqueId(), target.getUniqueId());
+                player.sendMessage("§c[Friend] " + target.getName() + " をフレンドから削除しました。");
+                player.closeInventory();
+            } else if (event.getRawSlot() == 15) {
+                // 「いいえ」：個別管理画面に戻る
+                openFriendActionGUI(player, target);
+            }
+        }
         else if (title.equals("§8フレンド申請一覧")) {
             event.setCancelled(true);
             ItemStack clickedItem = event.getCurrentItem();
@@ -174,20 +255,14 @@ public class FriendGUI implements Listener {
             OfflinePlayer target = meta.getOwningPlayer();
             if (target.getUniqueId() == null) return;
 
-            // 統合版でも安全に操作できる個別の承認・拒否メニューを開く
             openRequestActionGUI(player, target);
         }
         else if (title.startsWith("§8申請管理: ")) {
             event.setCancelled(true);
-            ItemStack clickedItem = event.getCurrentItem();
-            if (clickedItem == null) return;
-
-            // タイトルからターゲットの名前を抽出する
             String targetName = title.replace("§8申請管理: ", "");
             OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
 
             if (event.getRawSlot() == 11) {
-                // 承認
                 friendManager.acceptRequest(player.getUniqueId(), target.getUniqueId());
                 player.sendMessage("§a[Friend] " + target.getName() + " からのフレンド申請を承認しました！");
                 if (target.isOnline() && target.getPlayer() != null) {
@@ -195,4 +270,10 @@ public class FriendGUI implements Listener {
                 }
                 player.closeInventory();
             } else if (event.getRawSlot() == 15) {
-                // 拒否
+                friendManager.removeRequest(player.getUniqueId(), target.getUniqueId());
+                player.sendMessage("§c[Friend] " + target.getName() + " からのフレンド申請を拒否しました。");
+                player.closeInventory();
+            }
+        }
+    }
+}
