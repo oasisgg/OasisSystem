@@ -18,3 +18,7 @@ commands:
   p:
     description: パーティーメニューを開きます。
     aliases: [party]
+  maintenance:
+    description: サーバーのメンテナンスモードを切り替えます
+    permission: duel.admin
+    usage: /maintenance <on|off>
