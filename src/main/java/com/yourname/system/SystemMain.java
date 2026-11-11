@@ -1,6 +1,6 @@
 package com.yourname.system;
 
-import com.yourname.system.duel.MaintenanceCommand;
+import com.yourname.system.MaintenanceCommand;
 import com.yourname.system.friend.FriendCommand;
 import com.yourname.system.friend.FriendGUI;
 import com.yourname.system.friend.FriendManager;
