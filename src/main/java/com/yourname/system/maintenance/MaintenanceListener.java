@@ -1,10 +1,10 @@
-package com.yourname.duel;
+package com.yourname.system;
 
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.plugin.Plugin;
 
 public class MaintenanceListener implements Listener {
@@ -16,23 +16,23 @@ public class MaintenanceListener implements Listener {
     }
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-
+    public void onPlayerLogin(PlayerLoginEvent event) {
         // メンテナンスが有効かどうかチェック
         boolean isMaintenance = plugin.getConfig().getBoolean("maintenance.enabled", false);
         if (!isMaintenance) return;
 
-        // 管理者権限を持っている場合は参加を許可
+        Player player = event.getPlayer();
+
+        // 管理者権限（duel.admin）を持っている場合は参加を許可
         if (player.hasPermission("duel.admin")) {
-            player.sendMessage("§6§l»§e現在サーバーはメンテナンス中です。§7権限があるため参加が許可されています。");
             return;
         }
 
-        // 一般プレイヤーの場合はKickする
+        // 一般プレイヤーの場合はログインを拒否し、切断画面にメッセージを表示
         String rawMessage = plugin.getConfig().getString("maintenance.message", "§cこのサーバーはメンテナンス中です。");
         String kickMessage = ChatColor.translateAlternateColorCodes('&', rawMessage);
         
-        player.kickPlayer(kickMessage);
+        // ログイン段階で切断してメッセージを表示する
+        event.disallow(PlayerLoginEvent.Result.KICK_OTHER, kickMessage);
     }
 }
