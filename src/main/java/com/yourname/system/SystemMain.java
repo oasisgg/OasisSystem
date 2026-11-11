@@ -1,5 +1,6 @@
 package com.yourname.system;
 
+import com.yourname.system.duel.MaintenanceCommand;
 import com.yourname.system.friend.FriendCommand;
 import com.yourname.system.friend.FriendGUI;
 import com.yourname.system.friend.FriendManager;
@@ -26,6 +27,11 @@ public class SystemMain extends JavaPlugin implements CommandExecutor, Listener 
     public void onEnable() {
         instance = this;
         saveDefaultConfig();
+
+        // 0. メンテナンス機能の登録
+        if (getCommand("maintenance") != null) {
+            getCommand("maintenance").setExecutor(new MaintenanceCommand(this));
+        }
 
         // 1. フレンド機能の登録
         FriendManager friendManager = new FriendManager(this);
