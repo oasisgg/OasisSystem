@@ -1,4 +1,4 @@
-package com.yourname.duel;
+package com.yourname.system;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -18,14 +18,12 @@ public class MaintenanceCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        // --- 1. 権限チェック ---
-        // プレイヤーの場合は "duel.admin" 権限をチェック。コンソール（ConsoleCommandSender）の場合は無条件で許可する！
         if (sender instanceof Player && !sender.hasPermission("duel.admin")) {
-            sender.sendMessage("§cコマンドを実行する権限がありません。");
+            sender.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
             return true;
         }
 
-        if (args.length < 1) {
+        if (args.length == 0) {
             sender.sendMessage("§c使用方法: /maintenance <on|off>");
             return true;
         }
@@ -38,14 +36,13 @@ public class MaintenanceCommand implements CommandExecutor {
             plugin.getConfig().set("maintenance.enabled", true);
             plugin.saveConfig();
 
-            // メンテナンスONになった瞬間、管理者（duel.admin）以外のオンラインプレイヤーを全員問答無用でKickする
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (!player.hasPermission("duel.admin")) {
                     player.kickPlayer(kickMessage);
                 }
             }
 
-            Bukkit.broadcastMessage("§c《メンテナンス》| サーバーがメンテナンスモードになりました。§7メンバーはkickされます。");
+            Bukkit.broadcastMessage("§c[メンテナンス] サーバーがメンテナンスモードになりました。");
             sender.sendMessage("§aメンテナンスモードを有効にしました。");
             return true;
 
@@ -53,7 +50,7 @@ public class MaintenanceCommand implements CommandExecutor {
             plugin.getConfig().set("maintenance.enabled", false);
             plugin.saveConfig();
 
-            Bukkit.broadcastMessage("§a《メンテナンス》| メンテナンスが終了しました。§7通常通り参加できます。");
+            Bukkit.broadcastMessage("§a[メンテナンス] メンテナンスが終了しました。通常通り参加できます！");
             sender.sendMessage("§aメンテナンスモードを解除しました。");
             return true;
         } else {
